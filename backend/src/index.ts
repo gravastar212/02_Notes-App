@@ -18,17 +18,19 @@ const PORT = process.env.PORT || 4000;
 app.use(passport.initialize());
 
 // Security middleware
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", 'data:', 'https:'],
+      },
     },
-  },
-  crossOriginEmbedderPolicy: false, // Disable for development
-}));
+    crossOriginEmbedderPolicy: false, // Disable for development
+  }),
+);
 
 // CORS configuration
 const corsOptions = {

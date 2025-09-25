@@ -3,9 +3,6 @@ import { screen } from '@testing-library/react'
 import { render } from '../utils/test-utils'
 
 describe('NewNoteForm Component', () => {
-  const mockOnSuccess = jest.fn()
-  const mockOnCancel = jest.fn()
-
   beforeEach(() => {
     jest.clearAllMocks()
   })
