@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express, { type Request, type Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
@@ -22,7 +22,9 @@ app.get('/health', (req: Request, res: Response) => {
 
 // Start server
 app.listen(PORT, () => {
+  // eslint-disable-next-line no-console
   console.log(`🚀 Server running on port ${PORT}`);
+  // eslint-disable-next-line no-console
   console.log(`📊 Health check available at http://localhost:${PORT}/health`);
 });
 
