@@ -13,18 +13,23 @@ interface Note {
 
 interface NoteCardProps {
   note: Note;
+  onEdit?: (note: Note) => void;
 }
 
-export default function NoteCard({ note }: NoteCardProps) {
+export default function NoteCard({ note, onEdit }: NoteCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(note.title);
   const [editContent, setEditContent] = useState(note.content || '');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleEdit = () => {
-    setIsEditing(true);
-    setEditTitle(note.title);
-    setEditContent(note.content || '');
+    if (onEdit) {
+      onEdit(note);
+    } else {
+      setIsEditing(true);
+      setEditTitle(note.title);
+      setEditContent(note.content || '');
+    }
   };
 
   const handleSave = async () => {

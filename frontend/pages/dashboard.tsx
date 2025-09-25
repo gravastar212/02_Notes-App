@@ -1,8 +1,21 @@
 import Head from 'next/head';
 import { GetServerSideProps } from 'next';
-import { Box, Container, Heading, Text, VStack } from '@chakra-ui/react';
+import { useState } from 'react';
+import {
+  Box,
+  Container,
+  Heading,
+  Text,
+  VStack,
+  Button,
+  Flex,
+  useDisclosure,
+} from '@chakra-ui/react';
 import Layout from '@/components/Layout';
 import NotesList from '@/components/NotesList';
+import NewNoteForm from '@/components/NewNoteForm';
+import EditNoteModal from '@/components/EditNoteModal';
+import { useNotes } from '@/hooks/useNotes';
 
 interface Note {
   id: string;
@@ -23,7 +36,35 @@ interface DashboardProps {
   error: string | null;
 }
 
-export default function Dashboard({ notes, user, error }: DashboardProps) {
+export default function Dashboard({ notes: initialNotes, user, error }: DashboardProps) {
+  const [editingNote, setEditingNote] = useState<Note | null>(null);
+  const { open: isNewNoteOpen, onOpen: onNewNoteOpen, onClose: onNewNoteClose } = useDisclosure();
+  const {
+    open: isEditModalOpen,
+    onOpen: onEditModalOpen,
+    onClose: onEditModalClose,
+  } = useDisclosure();
+
+  const { notes, addNote, updateNote } = useNotes(initialNotes);
+
+  const handleNewNoteSuccess = () => {
+    onNewNoteClose();
+  };
+
+  const handleEditNote = (note: Note) => {
+    setEditingNote(note);
+    onEditModalOpen();
+  };
+
+  const handleEditNoteSuccess = () => {
+    setEditingNote(null);
+    onEditModalClose();
+  };
+
+  const handleEditModalClose = () => {
+    setEditingNote(null);
+    onEditModalClose();
+  };
   return (
     <>
       <Head>
@@ -54,14 +95,51 @@ export default function Dashboard({ notes, user, error }: DashboardProps) {
 
             {/* Notes Section */}
             <Box>
-              <Heading as='h2' size='lg' color='gray.700' mb={4} fontWeight='semibold'>
-                Your Notes
-              </Heading>
-              <NotesList notes={notes} />
+              <Flex justify='space-between' align='center' mb={4}>
+                <Heading as='h2' size='lg' color='gray.700' fontWeight='semibold'>
+                  Your Notes
+                </Heading>
+                <Button
+                  colorScheme='blue'
+                  onClick={onNewNoteOpen}
+                  borderRadius='xl'
+                  fontWeight='semibold'
+                  _hover={{
+                    transform: 'translateY(-1px)',
+                    boxShadow: 'lg',
+                  }}
+                  _active={{
+                    transform: 'translateY(0)',
+                  }}
+                  transition='all 0.2s'
+                >
+                  + New Note
+                </Button>
+              </Flex>
+
+              {isNewNoteOpen && (
+                <Box mb={6}>
+                  <NewNoteForm
+                    onSuccess={handleNewNoteSuccess}
+                    onCancel={onNewNoteClose}
+                    onSubmit={addNote}
+                  />
+                </Box>
+              )}
+
+              <NotesList notes={notes} onEditNote={handleEditNote} />
             </Box>
           </VStack>
         </Container>
       </Layout>
+
+      <EditNoteModal
+        note={editingNote}
+        isOpen={isEditModalOpen}
+        onClose={handleEditModalClose}
+        onSuccess={handleEditNoteSuccess}
+        onSubmit={updateNote}
+      />
     </>
   );
 }

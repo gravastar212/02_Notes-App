@@ -13,9 +13,10 @@ interface Note {
 
 interface NotesListProps {
   notes: Note[];
+  onEditNote?: (note: Note) => void;
 }
 
-export default function NotesList({ notes }: NotesListProps) {
+export default function NotesList({ notes, onEditNote }: NotesListProps) {
   const [sortBy, setSortBy] = useState<'createdAt' | 'updatedAt' | 'title'>('updatedAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
@@ -139,7 +140,7 @@ export default function NotesList({ notes }: NotesListProps) {
       {/* Notes Grid */}
       <VStack gap={4} align='stretch'>
         {sortedNotes.map(note => (
-          <NoteCard key={note.id} note={note} />
+          <NoteCard key={note.id} note={note} onEdit={onEditNote} />
         ))}
       </VStack>
     </Box>
