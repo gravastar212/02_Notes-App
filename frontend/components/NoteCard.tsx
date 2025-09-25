@@ -1,6 +1,7 @@
 import { Box, Text, Heading, HStack, VStack, Button } from '@chakra-ui/react';
 import { useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
+import apiClient from '@/lib/api';
 
 interface Note {
   id: string;
@@ -14,9 +15,10 @@ interface Note {
 interface NoteCardProps {
   note: Note;
   onEdit?: (note: Note) => void;
+  onDelete?: (noteId: string) => void;
 }
 
-export default function NoteCard({ note, onEdit }: NoteCardProps) {
+export default function NoteCard({ note, onEdit, onDelete }: NoteCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(note.title);
   const [editContent, setEditContent] = useState(note.content || '');
@@ -40,27 +42,17 @@ export default function NoteCard({ note, onEdit }: NoteCardProps) {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/notes/${note.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          title: editTitle.trim(),
-          content: editContent.trim() || null,
-        }),
+      await apiClient.put(`/notes/${note.id}`, {
+        title: editTitle.trim(),
+        content: editContent.trim() || null,
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to update note');
-      }
 
       alert('Note updated successfully');
       setIsEditing(false);
       // In a real app, you'd want to update the parent state or refetch data
       window.location.reload(); // Simple refresh for now
-    } catch {
+    } catch (error) {
+      console.error('Update error:', error);
       alert('Failed to update note. Please try again.');
     } finally {
       setIsLoading(false);
@@ -82,19 +74,17 @@ export default function NoteCard({ note, onEdit }: NoteCardProps) {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/notes/${note.id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete note');
+      if (onDelete) {
+        // Use the parent's delete function if provided
+        await onDelete(note.id);
+      } else {
+        // Fallback to direct API call
+        await apiClient.delete(`/notes/${note.id}`);
+        alert('Note deleted successfully');
+        window.location.reload(); // Simple refresh for now
       }
-
-      alert('Note deleted successfully');
-      // In a real app, you'd want to update the parent state or refetch data
-      window.location.reload(); // Simple refresh for now
-    } catch {
+    } catch (error) {
+      console.error('Delete error:', error);
       alert('Failed to delete note. Please try again.');
     } finally {
       setIsLoading(false);

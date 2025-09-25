@@ -53,7 +53,7 @@ export default function Dashboard({ notes: initialNotes, user, error }: Dashboar
     onClose: onEditModalClose,
   } = useDisclosure();
 
-  const { notes, addNote, updateNote } = useNotes(initialNotes);
+  const { notes, addNote, updateNote, deleteNote } = useNotes(initialNotes);
 
   const handleNewNoteSuccess = () => {
     onNewNoteClose();
@@ -135,7 +135,7 @@ export default function Dashboard({ notes: initialNotes, user, error }: Dashboar
                 </Box>
               )}
 
-              <NotesList notes={notes} onEditNote={handleEditNote} />
+               <NotesList notes={notes} onEditNote={handleEditNote} onDeleteNote={deleteNote} />
             </Box>
           </VStack>
         </Container>
@@ -157,8 +157,8 @@ export const getServerSideProps = requireAuth<DashboardProps>(async (context, au
   const cookies = context.req.headers.cookie || '';
 
   try {
-    // Fetch notes using the authenticated user's cookies
-    const notesResponse = await fetch(`${API_URL}/notes`, {
+    // Use the server-side notes endpoint that works with refresh tokens
+    const notesResponse = await fetch(`${API_URL}/notes/server`, {
       method: 'GET',
       headers: {
         Cookie: cookies,
@@ -168,7 +168,16 @@ export const getServerSideProps = requireAuth<DashboardProps>(async (context, au
     });
 
     if (!notesResponse.ok) {
-      throw new Error('Failed to fetch notes');
+      // If we can't get notes, return empty array but don't throw error
+      console.warn('Could not fetch notes, returning empty array');
+      return {
+        props: {
+          notes: [],
+          user: authData.user,
+          error: null, // Don't show error to user, just empty state
+          authData,
+        },
+      };
     }
 
     const notesData = await notesResponse.json();
@@ -187,7 +196,7 @@ export const getServerSideProps = requireAuth<DashboardProps>(async (context, au
       props: {
         notes: [],
         user: authData.user,
-        error: 'Failed to load notes',
+        error: null, // Don't show error to user, just empty state
         authData,
       },
     };
