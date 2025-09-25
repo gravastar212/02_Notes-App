@@ -31,6 +31,11 @@ export default function Layout({ children }: LayoutProps) {
                     Dashboard
                   </Button>
                 </Link>
+                <Link href='/profile'>
+                  <Button size='sm' variant='outline' colorScheme='gray'>
+                    Profile
+                  </Button>
+                </Link>
                 <Text color='gray.600' fontSize='sm'>
                   Welcome, {user.email}
                 </Text>

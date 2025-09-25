@@ -251,4 +251,43 @@ router.post('/refresh', async (req: Request, res: Response) => {
   }
 });
 
+// Get current user info endpoint
+router.get('/me', async (req: Request, res: Response) => {
+  try {
+    const { refreshToken } = req.cookies;
+
+    if (!refreshToken) {
+      return res.status(401).json({
+        error: 'No refresh token provided',
+      });
+    }
+
+    // Verify refresh token
+    const decoded = jwt.verify(refreshToken, JWT_SECRET) as { userId: string };
+
+    // Get user info from database
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: { id: true, email: true, createdAt: true }, // Don't return password or refreshToken
+    });
+
+    if (!user) {
+      return res.status(401).json({
+        error: 'User not found',
+      });
+    }
+
+    res.json({
+      message: 'User info retrieved successfully',
+      user,
+    });
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Get user info error:', error);
+    res.status(401).json({
+      error: 'Invalid refresh token',
+    });
+  }
+});
+
 export default router;

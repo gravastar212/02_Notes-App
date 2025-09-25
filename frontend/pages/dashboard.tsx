@@ -1,5 +1,4 @@
 import Head from 'next/head';
-import { GetServerSideProps } from 'next';
 import { useState } from 'react';
 import {
   Box,
@@ -16,6 +15,7 @@ import NotesList from '@/components/NotesList';
 import NewNoteForm from '@/components/NewNoteForm';
 import EditNoteModal from '@/components/EditNoteModal';
 import { useNotes } from '@/hooks/useNotes';
+import { requireAuth } from '@/lib/withAuth';
 
 interface Note {
   id: string;
@@ -26,7 +26,7 @@ interface Note {
   updatedAt: string;
 }
 
-interface DashboardProps {
+interface DashboardProps extends Record<string, unknown> {
   notes: Note[];
   user: {
     id: string;
@@ -34,6 +34,14 @@ interface DashboardProps {
     createdAt: string;
   } | null;
   error: string | null;
+  authData: {
+    user: {
+      id: string;
+      email: string;
+      createdAt: string;
+    };
+    accessToken: string;
+  };
 }
 
 export default function Dashboard({ notes: initialNotes, user, error }: DashboardProps) {
@@ -144,98 +152,44 @@ export default function Dashboard({ notes: initialNotes, user, error }: Dashboar
   );
 }
 
-export const getServerSideProps: GetServerSideProps<DashboardProps> = async context => {
-  const { req } = context;
+export const getServerSideProps = requireAuth<DashboardProps>(async (context, authData) => {
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+  const cookies = context.req.headers.cookie || '';
 
   try {
-    // Extract cookies from the request
-    const cookies = req.headers.cookie || '';
-
-    // First, try to get user info and notes using the refresh token cookie
+    // Fetch notes using the authenticated user's cookies
     const notesResponse = await fetch(`${API_URL}/notes`, {
       method: 'GET',
       headers: {
-        Cookie: cookies, // Forward all cookies from the client
+        Cookie: cookies,
         'Content-Type': 'application/json',
       },
-      credentials: 'include', // Important: include credentials for cookie-based auth
+      credentials: 'include',
     });
 
     if (!notesResponse.ok) {
-      // If notes request fails, try to refresh the token
-      const refreshResponse = await fetch(`${API_URL}/auth/refresh`, {
-        method: 'POST',
-        headers: {
-          Cookie: cookies,
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      });
-
-      if (!refreshResponse.ok) {
-        // If refresh fails, redirect to login
-        return {
-          redirect: {
-            destination: '/login',
-            permanent: false,
-          },
-        };
-      }
-
-      // Get new access token from refresh response
-      const refreshData = await refreshResponse.json();
-      const newAccessToken = refreshData.accessToken;
-
-      // Retry notes request with new access token
-      const retryNotesResponse = await fetch(`${API_URL}/notes`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${newAccessToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!retryNotesResponse.ok) {
-        return {
-          redirect: {
-            destination: '/login',
-            permanent: false,
-          },
-        };
-      }
-
-      const notesData = await retryNotesResponse.json();
-      return {
-        props: {
-          notes: notesData.notes || [],
-          user: { id: 'user-id', email: 'user@example.com', createdAt: new Date().toISOString() }, // Mock user data
-          error: null,
-        },
-      };
+      throw new Error('Failed to fetch notes');
     }
 
     const notesData = await notesResponse.json();
 
-    // Try to get user info (this would need a separate endpoint or include it in notes response)
-    // For now, we'll use mock data since we don't have a /me endpoint
-    const user = { id: 'user-id', email: 'user@example.com', createdAt: new Date().toISOString() };
-
     return {
       props: {
         notes: notesData.notes || [],
-        user,
+        user: authData.user,
         error: null,
+        authData,
       },
     };
   } catch (error) {
-    console.error('Dashboard SSR Error:', error);
+    console.error('Error fetching dashboard data:', error);
     return {
       props: {
         notes: [],
-        user: null,
-        error: 'Failed to load notes. Please try again.',
+        user: authData.user,
+        error: 'Failed to load notes',
+        authData,
       },
     };
   }
-};
+});

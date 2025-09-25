@@ -16,9 +16,11 @@
     "@chakra-ui/react": "^3.27.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+    "@types/jsonwebtoken": "^9.0.10",
     "axios": "^1.12.2",
     "date-fns": "^2.30.0",
     "framer-motion": "^12.23.21",
+    "jsonwebtoken": "^9.0.2",
     "next": "15.5.4",
     "react": "19.1.0",
     "react-dom": "19.1.0"
