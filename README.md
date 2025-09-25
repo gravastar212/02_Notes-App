@@ -151,3 +151,306 @@ export const getServerSideProps: GetServerSideProps = async ({ req }) => {
   return { props: { notes: await response.json() } };
 };
 ```
+
+## Deployment
+
+This application is designed to be deployed on modern cloud platforms with separate deployments for frontend and backend.
+
+### Frontend Deployment (Vercel)
+
+The frontend is configured for deployment on Vercel with Next.js optimization.
+
+#### Prerequisites
+- Vercel account
+- GitHub repository connected to Vercel
+
+#### Deployment Steps
+
+1. **Connect Repository**
+   ```bash
+   # Install Vercel CLI
+   npm i -g vercel
+   
+   # Login to Vercel
+   vercel login
+   
+   # Deploy from frontend directory
+   cd frontend
+   vercel
+   ```
+
+2. **Environment Variables**
+   Set the following environment variables in Vercel dashboard:
+   ```
+   NEXT_PUBLIC_API_URL=https://your-backend-url.com
+   ```
+
+3. **Automatic Deployments**
+   - Push to `main` branch triggers production deployment
+   - Push to other branches creates preview deployments
+   - Vercel automatically builds and deploys on every push
+
+#### Vercel Configuration
+
+The `frontend/vercel.json` file includes:
+- Next.js framework detection
+- API route configuration
+- CORS headers for API calls
+- Environment variable handling
+
+### Backend Deployment (Railway/Render)
+
+The backend can be deployed on Railway or Render with Docker support.
+
+#### Option 1: Railway Deployment
+
+1. **Connect Repository**
+   - Go to [Railway](https://railway.app)
+   - Connect your GitHub repository
+   - Select the backend folder
+
+2. **Environment Variables**
+   Set the following environment variables in Railway dashboard:
+   ```
+   NODE_ENV=production
+   PORT=4000
+   DATABASE_URL=postgresql://user:password@host:port/database
+   JWT_SECRET=your-super-secret-jwt-key
+   FRONTEND_URL=https://your-frontend-url.vercel.app
+   ```
+
+3. **Database Setup**
+   - Add PostgreSQL service in Railway
+   - Copy the DATABASE_URL from the PostgreSQL service
+   - Run migrations: Railway will automatically run `npm run prisma:migrate`
+
+#### Option 2: Render Deployment
+
+1. **Create Web Service**
+   - Go to [Render](https://render.com)
+   - Create new Web Service
+   - Connect your GitHub repository
+   - Set root directory to `backend`
+
+2. **Build Configuration**
+   ```
+   Build Command: npm ci && npm run build
+   Start Command: npm start
+   ```
+
+3. **Environment Variables**
+   Set the following environment variables in Render dashboard:
+   ```
+   NODE_ENV=production
+   PORT=4000
+   DATABASE_URL=postgresql://user:password@host:port/database
+   JWT_SECRET=your-super-secret-jwt-key
+   FRONTEND_URL=https://your-frontend-url.vercel.app
+   ```
+
+4. **Database Setup**
+   - Create PostgreSQL database in Render
+   - Copy the DATABASE_URL
+   - Run migrations manually or via Render's build process
+
+#### Docker Deployment
+
+The backend includes a `Dockerfile` for containerized deployment:
+
+```dockerfile
+# Multi-stage build for production
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+RUN npm run build
+EXPOSE 4000
+CMD ["npm", "start"]
+```
+
+### Environment Variables
+
+#### Backend Environment Variables
+
+Create a `.env` file in the backend directory:
+
+```env
+# Server Configuration
+NODE_ENV=production
+PORT=4000
+
+# Database
+DATABASE_URL=postgresql://username:password@localhost:5432/notes_app
+
+# JWT Configuration
+JWT_SECRET=your-super-secret-jwt-key-minimum-32-characters
+
+# Frontend URL (for CORS)
+FRONTEND_URL=https://your-frontend-url.vercel.app
+
+# Optional: Database connection pool settings
+DATABASE_POOL_SIZE=10
+DATABASE_TIMEOUT=20000
+```
+
+#### Frontend Environment Variables
+
+Create a `.env.local` file in the frontend directory:
+
+```env
+# Backend API URL
+NEXT_PUBLIC_API_URL=https://your-backend-url.railway.app
+# or
+NEXT_PUBLIC_API_URL=https://your-backend-url.onrender.com
+```
+
+### Database Setup
+
+#### Managed PostgreSQL (Recommended)
+
+1. **Railway PostgreSQL**
+   - Add PostgreSQL service in Railway
+   - Copy the connection string
+   - Set as `DATABASE_URL` environment variable
+
+2. **Render PostgreSQL**
+   - Create PostgreSQL database in Render
+   - Copy the connection string
+   - Set as `DATABASE_URL` environment variable
+
+3. **Other Providers**
+   - **Supabase**: Free tier with PostgreSQL
+   - **Neon**: Serverless PostgreSQL
+   - **PlanetScale**: MySQL alternative
+   - **AWS RDS**: Production-grade PostgreSQL
+
+#### Database Migrations
+
+Run migrations after setting up the database:
+
+```bash
+# In backend directory
+npm run prisma:migrate
+npm run prisma:generate
+```
+
+### Health Check Endpoint
+
+The backend includes a health check endpoint at `/health`:
+
+```bash
+# Check if backend is running
+curl https://your-backend-url.com/health
+
+# Expected response
+{"ok": true}
+```
+
+### Security Considerations
+
+#### Production Security
+
+1. **Environment Variables**
+   - Never commit `.env` files
+   - Use strong, unique JWT secrets
+   - Rotate secrets regularly
+
+2. **CORS Configuration**
+   - Set `FRONTEND_URL` to your actual frontend domain
+   - Avoid using wildcards in production
+
+3. **Rate Limiting**
+   - Backend includes rate limiting for auth endpoints
+   - Adjust limits based on your traffic
+
+4. **HTTPS**
+   - Both Vercel and Railway/Render provide HTTPS
+   - Ensure all API calls use HTTPS
+
+#### Cookie Configuration
+
+The refresh token cookies are configured for production:
+
+```typescript
+// Secure cookie settings
+{
+  httpOnly: true,        // Not accessible via JavaScript
+  secure: true,          // HTTPS only in production
+  sameSite: 'strict',    // CSRF protection
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  domain: process.env.COOKIE_DOMAIN // Set for production
+}
+```
+
+### Monitoring and Logs
+
+#### Vercel Monitoring
+- Built-in analytics and performance monitoring
+- Function logs available in dashboard
+- Real-time error tracking
+
+#### Railway Monitoring
+- Built-in metrics and logs
+- Health check monitoring
+- Automatic restarts on crashes
+
+#### Render Monitoring
+- Application logs in dashboard
+- Health check monitoring
+- Performance metrics
+
+### Troubleshooting
+
+#### Common Issues
+
+1. **CORS Errors**
+   ```bash
+   # Check FRONTEND_URL environment variable
+   echo $FRONTEND_URL
+   ```
+
+2. **Database Connection**
+   ```bash
+   # Test database connection
+   npm run prisma:studio
+   ```
+
+3. **Build Failures**
+   ```bash
+   # Check Node.js version
+   node --version  # Should be 18.x
+   
+   # Clear cache and reinstall
+   rm -rf node_modules package-lock.json
+   npm install
+   ```
+
+4. **Health Check Failures**
+   ```bash
+   # Check if server is running
+   curl https://your-backend-url.com/health
+   ```
+
+#### Debug Mode
+
+Enable debug logging by setting:
+```env
+DEBUG=*
+NODE_ENV=development
+```
+
+### Performance Optimization
+
+#### Frontend (Vercel)
+- Automatic Next.js optimizations
+- Image optimization
+- Static generation for static pages
+- Edge functions for API routes
+
+#### Backend (Railway/Render)
+- Connection pooling for database
+- Rate limiting for API protection
+- Compression middleware
+- Caching headers for static assets
+```
