@@ -3,16 +3,21 @@ import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
+import morgan from 'morgan';
 import dotenv from 'dotenv';
 import passport from './middleware/passport.ts';
 import authRoutes from './routes/auth.ts';
 import notesRoutes from './routes/notes.ts';
+import logger, { morganStream } from './utils/logger.ts';
 
 // Load environment variables
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
+
+// HTTP request logging
+app.use(morgan('combined', { stream: morganStream }));
 
 // Initialize passport
 app.use(passport.initialize());
@@ -80,20 +85,29 @@ app.use('/notes', notesRoutes);
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
-  res.status(200).json({ ok: true });
+  const healthCheck = {
+    uptime: process.uptime(),
+    message: 'OK',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    version: process.env.npm_package_version || '1.0.0',
+  };
+
+  logger.info('Health check requested', {
+    ip: req.ip,
+    userAgent: req.get('User-Agent'),
+  });
+
+  res.status(200).json(healthCheck);
 });
 
 // Start server only if not in test mode
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
-    // eslint-disable-next-line no-console
-    console.log(`🚀 Server running on port ${PORT}`);
-    // eslint-disable-next-line no-console
-    console.log(`📊 Health check available at http://localhost:${PORT}/health`);
-    // eslint-disable-next-line no-console
-    console.log(`🔐 Auth endpoints available at http://localhost:${PORT}/auth`);
-    // eslint-disable-next-line no-console
-    console.log(`📝 Notes endpoints available at http://localhost:${PORT}/notes`);
+    logger.info(`🚀 Server running on port ${PORT}`);
+    logger.info(`📊 Health check available at http://localhost:${PORT}/health`);
+    logger.info(`🔐 Auth endpoints available at http://localhost:${PORT}/auth`);
+    logger.info(`📝 Notes endpoints available at http://localhost:${PORT}/notes`);
   });
 }
 

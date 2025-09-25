@@ -15,9 +15,24 @@
     "build:frontend": "npm run build --workspace=frontend",
     "build:backend": "npm run build --workspace=backend",
     "test": "npm run test --workspaces",
+    "test:frontend": "npm run test --workspace=frontend",
+    "test:backend": "npm run test --workspace=backend",
+    "test:coverage": "npm run test:coverage --workspace=frontend",
     "lint": "npm run lint --workspaces",
+    "lint:fix": "npm run lint:fix --workspaces",
+    "lint:frontend": "npm run lint --workspace=frontend",
+    "lint:backend": "npm run lint --workspace=backend",
+    "type-check": "npm run type-check --workspaces",
     "clean": "npm run clean --workspaces && rm -rf node_modules",
-    "install:all": "npm install"
+    "install:all": "npm install",
+    "setup:env": "cp backend/.env.example backend/.env && cp frontend/.env.example frontend/.env.local",
+    "setup:db": "npm run prisma:generate --workspace=backend && npm run prisma:migrate --workspace=backend",
+    "migrate": "npm run prisma:migrate --workspace=backend",
+    "migrate:reset": "npm run prisma:reset --workspace=backend",
+    "seed": "npm run db:seed --workspace=backend",
+    "db:studio": "npm run prisma:studio --workspace=backend",
+    "health": "curl -s http://localhost:4000/health || echo 'Backend not running'",
+    "quickstart": "npm run install:all && npm run setup:env && npm run setup:db && npm run dev"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
