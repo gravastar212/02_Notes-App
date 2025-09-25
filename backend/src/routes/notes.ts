@@ -1,6 +1,6 @@
 import { type Request, type Response, Router } from 'express';
-import passport from 'passport';
 import { PrismaClient } from '@prisma/client';
+import { authenticateJWT } from '../middleware/auth.ts';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -43,7 +43,7 @@ const validateNoteData = (data: { title?: unknown; content?: unknown }): { isVal
 // GET /notes - List user's notes
 router.get(
   '/',
-  passport.authenticate('jwt', { session: false }),
+  authenticateJWT,
   async (req: AuthenticatedRequest, res: Response) => {
     try {
       const userId = req.user?.id;
@@ -79,7 +79,7 @@ router.get(
 // POST /notes - Create a new note
 router.post(
   '/',
-  passport.authenticate('jwt', { session: false }),
+  authenticateJWT,
   async (req: AuthenticatedRequest, res: Response) => {
     try {
       const userId = req.user?.id;
@@ -130,7 +130,7 @@ router.post(
 // GET /notes/:id - Get a specific note
 router.get(
   '/:id',
-  passport.authenticate('jwt', { session: false }),
+  authenticateJWT,
   async (req: AuthenticatedRequest, res: Response) => {
     try {
       const userId = req.user?.id;
@@ -173,7 +173,7 @@ router.get(
 // PUT /notes/:id - Update a note
 router.put(
   '/:id',
-  passport.authenticate('jwt', { session: false }),
+  authenticateJWT,
   async (req: AuthenticatedRequest, res: Response) => {
     try {
       const userId = req.user?.id;
@@ -237,7 +237,7 @@ router.put(
 // DELETE /notes/:id - Delete a note
 router.delete(
   '/:id',
-  passport.authenticate('jwt', { session: false }),
+  authenticateJWT,
   async (req: AuthenticatedRequest, res: Response) => {
     try {
       const userId = req.user?.id;

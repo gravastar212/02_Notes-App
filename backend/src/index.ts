@@ -37,16 +37,18 @@ app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({ ok: true });
 });
 
-// Start server
-app.listen(PORT, () => {
-  // eslint-disable-next-line no-console
-  console.log(`🚀 Server running on port ${PORT}`);
-  // eslint-disable-next-line no-console
-  console.log(`📊 Health check available at http://localhost:${PORT}/health`);
-  // eslint-disable-next-line no-console
-  console.log(`🔐 Auth endpoints available at http://localhost:${PORT}/auth`);
-  // eslint-disable-next-line no-console
-  console.log(`📝 Notes endpoints available at http://localhost:${PORT}/notes`);
-});
+// Start server only if not in test mode
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    // eslint-disable-next-line no-console
+    console.log(`🚀 Server running on port ${PORT}`);
+    // eslint-disable-next-line no-console
+    console.log(`📊 Health check available at http://localhost:${PORT}/health`);
+    // eslint-disable-next-line no-console
+    console.log(`🔐 Auth endpoints available at http://localhost:${PORT}/auth`);
+    // eslint-disable-next-line no-console
+    console.log(`📝 Notes endpoints available at http://localhost:${PORT}/notes`);
+  });
+}
 
 export default app;
