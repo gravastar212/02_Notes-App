@@ -3,13 +3,18 @@ import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
+import passport from './middleware/passport.ts';
 import authRoutes from './routes/auth.ts';
+import notesRoutes from './routes/notes.ts';
 
 // Load environment variables
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
+
+// Initialize passport
+app.use(passport.initialize());
 
 // Middleware
 app.use(helmet());
@@ -25,6 +30,7 @@ app.use(cookieParser());
 
 // Routes
 app.use('/auth', authRoutes);
+app.use('/notes', notesRoutes);
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
@@ -39,6 +45,8 @@ app.listen(PORT, () => {
   console.log(`📊 Health check available at http://localhost:${PORT}/health`);
   // eslint-disable-next-line no-console
   console.log(`🔐 Auth endpoints available at http://localhost:${PORT}/auth`);
+  // eslint-disable-next-line no-console
+  console.log(`📝 Notes endpoints available at http://localhost:${PORT}/notes`);
 });
 
 export default app;
