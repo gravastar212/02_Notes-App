@@ -1,21 +1,53 @@
-import { Box, Flex, Heading, Spacer } from '@chakra-ui/react';
+import { Box, Flex, Heading, Spacer, Button, Text, HStack } from '@chakra-ui/react';
 import { ReactNode } from 'react';
+import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface LayoutProps {
   children: ReactNode;
 }
 
 export default function Layout({ children }: LayoutProps) {
+  const { user, logout } = useAuth();
+
   return (
     <Box minH='100vh' bg='gray.50'>
       {/* Header */}
       <Box bg='white' shadow='sm' borderBottom='1px' borderColor='gray.200'>
         <Flex px={6} py={4} align='center'>
-          <Heading as='h1' size='lg' color='blue.600'>
-            Notes App
-          </Heading>
+          <Link href='/'>
+            <Heading as='h1' size='lg' color='blue.600' cursor='pointer'>
+              Notes App
+            </Heading>
+          </Link>
           <Spacer />
-          {/* Navigation will be added here later */}
+
+          {/* Navigation */}
+          <HStack gap={4}>
+            {user ? (
+              <>
+                <Text color='gray.600' fontSize='sm'>
+                  Welcome, {user.email}
+                </Text>
+                <Button size='sm' variant='outline' colorScheme='red' onClick={logout}>
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link href='/login'>
+                  <Button size='sm' variant='outline' colorScheme='blue'>
+                    Login
+                  </Button>
+                </Link>
+                <Link href='/register'>
+                  <Button size='sm' colorScheme='blue'>
+                    Register
+                  </Button>
+                </Link>
+              </>
+            )}
+          </HStack>
         </Flex>
       </Box>
 
