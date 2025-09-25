@@ -1,11 +1,21 @@
 import Head from 'next/head';
 import { Box, Container, Heading, Text, Button, VStack } from '@chakra-ui/react';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function Home() {
   const { user } = useAuth();
+  const router = useRouter();
+
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (user) {
+      router.push('/dashboard');
+    }
+  }, [user, router]);
 
   return (
     <>
@@ -53,89 +63,59 @@ export default function Home() {
 
               {/* Content */}
               <Box>
-                {user ? (
-                  <VStack gap={6}>
-                    <Text fontSize='lg' color='green.600' fontWeight='medium'>
-                      Welcome back, {user.email}!
-                    </Text>
-                    <Text color='gray.500' maxW='md' mx='auto'>
-                      Your notes will be listed here...
-                    </Text>
-                    <Button
-                      colorScheme='blue'
-                      size='lg'
-                      borderRadius='xl'
-                      px={8}
-                      py={6}
-                      fontSize='md'
-                      fontWeight='semibold'
-                      _hover={{
-                        transform: 'translateY(-1px)',
-                        boxShadow: 'lg',
-                      }}
-                      _active={{
-                        transform: 'translateY(0)',
-                      }}
-                      transition='all 0.2s'
-                    >
-                      Create New Note
-                    </Button>
+                <VStack gap={6}>
+                  <Text fontSize='lg' color='gray.500' maxW='md' mx='auto'>
+                    Please sign in to access your notes
+                  </Text>
+                  <VStack gap={4}>
+                    <Link href='/login'>
+                      <Button
+                        colorScheme='blue'
+                        size='lg'
+                        borderRadius='xl'
+                        px={8}
+                        py={6}
+                        fontSize='md'
+                        fontWeight='semibold'
+                        _hover={{
+                          transform: 'translateY(-1px)',
+                          boxShadow: 'lg',
+                        }}
+                        _active={{
+                          transform: 'translateY(0)',
+                        }}
+                        transition='all 0.2s'
+                      >
+                        Sign In
+                      </Button>
+                    </Link>
+                    <Link href='/register'>
+                      <Button
+                        variant='outline'
+                        colorScheme='blue'
+                        size='lg'
+                        borderRadius='xl'
+                        px={8}
+                        py={6}
+                        fontSize='md'
+                        fontWeight='semibold'
+                        borderColor='gray.300'
+                        color='gray.700'
+                        _hover={{
+                          borderColor: 'blue.500',
+                          color: 'blue.500',
+                          transform: 'translateY(-1px)',
+                        }}
+                        _active={{
+                          transform: 'translateY(0)',
+                        }}
+                        transition='all 0.2s'
+                      >
+                        Create Account
+                      </Button>
+                    </Link>
                   </VStack>
-                ) : (
-                  <VStack gap={6}>
-                    <Text fontSize='lg' color='gray.500' maxW='md' mx='auto'>
-                      Please sign in to access your notes
-                    </Text>
-                    <VStack gap={4}>
-                      <Link href='/login'>
-                        <Button
-                          colorScheme='blue'
-                          size='lg'
-                          borderRadius='xl'
-                          px={8}
-                          py={6}
-                          fontSize='md'
-                          fontWeight='semibold'
-                          _hover={{
-                            transform: 'translateY(-1px)',
-                            boxShadow: 'lg',
-                          }}
-                          _active={{
-                            transform: 'translateY(0)',
-                          }}
-                          transition='all 0.2s'
-                        >
-                          Sign In
-                        </Button>
-                      </Link>
-                      <Link href='/register'>
-                        <Button
-                          variant='outline'
-                          colorScheme='blue'
-                          size='lg'
-                          borderRadius='xl'
-                          px={8}
-                          py={6}
-                          fontSize='md'
-                          fontWeight='semibold'
-                          borderColor='gray.300'
-                          color='gray.700'
-                          _hover={{
-                            borderColor: 'blue.500',
-                            color: 'blue.500',
-                            transform: 'translateY(-1px)',
-                          }}
-                          _active={{
-                            transform: 'translateY(0)',
-                          }}
-                          transition='all 0.2s'
-                        >
-                          Create Account
-                        </Button>
-                      </Link>
-                    </VStack>
-                  </VStack>
-                )}
+                </VStack>
               </Box>
             </VStack>
           </Container>

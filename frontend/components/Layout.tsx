@@ -26,6 +26,11 @@ export default function Layout({ children }: LayoutProps) {
           <HStack gap={4}>
             {user ? (
               <>
+                <Link href='/dashboard'>
+                  <Button size='sm' variant='outline' colorScheme='blue'>
+                    Dashboard
+                  </Button>
+                </Link>
                 <Text color='gray.600' fontSize='sm'>
                   Welcome, {user.email}
                 </Text>
