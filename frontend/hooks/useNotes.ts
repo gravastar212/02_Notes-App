@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import apiClient from '@/lib/api';
 
 interface Note {
   id: string;
@@ -7,6 +8,16 @@ interface Note {
   userId: string;
   createdAt: string;
   updatedAt: string;
+}
+
+interface ApiResponse {
+  message: string;
+  note: Note;
+}
+
+interface NotesResponse {
+  message: string;
+  notes: Note[];
 }
 
 export function useNotes(initialNotes: Note[]) {
@@ -29,21 +40,8 @@ export function useNotes(initialNotes: Note[]) {
     setNotes(prev => [tempNote, ...prev]);
 
     try {
-      const response = await fetch('/api/notes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(noteData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create note');
-      }
-
-      const result = await response.json();
-
+      const result = await apiClient.post<ApiResponse>('/notes', noteData);
+      
       // Replace temp note with real note
       setNotes(prev => prev.map(note => (note.id === tempNote.id ? result.note : note)));
 
@@ -74,33 +72,20 @@ export function useNotes(initialNotes: Note[]) {
 
       setNotes(prev => prev.map(note => (note.id === noteId ? optimisticNote : note)));
 
-      try {
-        const response = await fetch(`/api/notes/${noteId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify(noteData),
-        });
+       try {
+         const result = await apiClient.put<ApiResponse>(`/notes/${noteId}`, noteData);
 
-        if (!response.ok) {
-          throw new Error('Failed to update note');
-        }
+         // Replace with server response
+         setNotes(prev => prev.map(note => (note.id === noteId ? result.note : note)));
 
-        const result = await response.json();
-
-        // Replace with server response
-        setNotes(prev => prev.map(note => (note.id === noteId ? result.note : note)));
-
-        return result.note;
-      } catch (error) {
-        // Rollback optimistic update on error
-        setNotes(prev => prev.map(note => (note.id === noteId ? originalNote : note)));
-        throw error;
-      } finally {
-        setIsLoading(false);
-      }
+         return result.note;
+       } catch (error) {
+         // Rollback optimistic update on error
+         setNotes(prev => prev.map(note => (note.id === noteId ? originalNote : note)));
+         throw error;
+       } finally {
+         setIsLoading(false);
+       }
     },
     [notes],
   );
@@ -116,14 +101,7 @@ export function useNotes(initialNotes: Note[]) {
       setNotes(prev => prev.filter(note => note.id !== noteId));
 
       try {
-        const response = await fetch(`/api/notes/${noteId}`, {
-          method: 'DELETE',
-          credentials: 'include',
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to delete note');
-        }
+        await apiClient.delete(`/notes/${noteId}`);
       } catch (error) {
         // Rollback optimistic update on error
         setNotes(prev =>
@@ -142,14 +120,8 @@ export function useNotes(initialNotes: Note[]) {
   const refreshNotes = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/notes', {
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setNotes(result.notes || []);
-      }
+      const result = await apiClient.get<NotesResponse>('/notes');
+      setNotes(result.notes || []);
     } catch (error) {
       console.error('Failed to refresh notes:', error);
     } finally {

@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Box, Button, Text, HStack, VStack } from '@chakra-ui/react';
+import apiClient from '@/lib/api';
 
 interface NewNoteFormProps {
   onSuccess: () => void;
   onCancel: () => void;
-  onSubmit?: (noteData: { title: string; content: string | null }) => Promise<void>;
+  onSubmit?: (noteData: { title: string; content: string | null }) => Promise<unknown>;
 }
 
 export default function NewNoteForm({ onSuccess, onCancel, onSubmit }: NewNoteFormProps) {
@@ -34,20 +35,8 @@ export default function NewNoteForm({ onSuccess, onCancel, onSubmit }: NewNoteFo
         // Use optimistic UI handler
         await onSubmit(noteData);
       } else {
-        // Fallback to direct API call
-        const response = await fetch('/api/notes', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify(noteData),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to create note');
-        }
+        // Fallback to direct API call using apiClient
+        await apiClient.post('/notes', noteData);
       }
 
       // Clear form

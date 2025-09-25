@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Box, Button, Text, HStack, VStack } from '@chakra-ui/react';
+import apiClient from '@/lib/api';
 
 interface Note {
   id: string;
@@ -15,7 +16,7 @@ interface EditNoteModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  onSubmit?: (noteId: string, noteData: { title: string; content: string | null }) => Promise<void>;
+  onSubmit?: (noteId: string, noteData: { title: string; content: string | null }) => Promise<unknown>;
 }
 
 export default function EditNoteModal({
@@ -61,20 +62,8 @@ export default function EditNoteModal({
         // Use optimistic UI handler
         await onSubmit(note.id, noteData);
       } else {
-        // Fallback to direct API call
-        const response = await fetch(`/api/notes/${note.id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify(noteData),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to update note');
-        }
+        // Fallback to direct API call using apiClient
+        await apiClient.put(`/notes/${note.id}`, noteData);
       }
 
       // Call success callback

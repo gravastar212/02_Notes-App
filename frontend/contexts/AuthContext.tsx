@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import apiClient from '@/lib/api';
 
 interface User {
   id: string;
@@ -22,8 +23,6 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
@@ -46,28 +45,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setError(null);
 
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Include cookies for refresh token
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
-      }
+      const { user, accessToken } = await apiClient.login(email, password);
 
       // Store user and token
-      setUser(data.user);
-      setAccessToken(data.accessToken);
+      setUser(user);
+      setAccessToken(accessToken);
 
       // Persist to localStorage
-      localStorage.setItem('accessToken', data.accessToken);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('user', JSON.stringify(user));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Login failed';
       setError(errorMessage);
@@ -82,28 +68,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setError(null);
 
     try {
-      const response = await fetch(`${API_URL}/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Include cookies for refresh token
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Registration failed');
-      }
+      const { user, accessToken } = await apiClient.register(email, password);
 
       // Store user and token
-      setUser(data.user);
-      setAccessToken(data.accessToken);
+      setUser(user);
+      setAccessToken(accessToken);
 
       // Persist to localStorage
-      localStorage.setItem('accessToken', data.accessToken);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('user', JSON.stringify(user));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Registration failed';
       setError(errorMessage);
@@ -113,7 +86,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
     setUser(null);
     setAccessToken(null);
     setError(null);
@@ -123,12 +96,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.removeItem('user');
 
     // Call backend logout endpoint to clear refresh token cookie
-    fetch(`${API_URL}/auth/logout`, {
-      method: 'POST',
-      credentials: 'include',
-    }).catch(() => {
-      // Ignore errors on logout
-    });
+    await apiClient.logout();
   };
 
   const value: AuthContextType = {
